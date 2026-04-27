@@ -1,74 +1,63 @@
-Rapid Crisis Response
-Rapid Crisis Response is a high-performance emergency coordination platform designed to streamline communication and data extraction during critical situations. The system leverages the Gemma 4:31-b cloud model for intelligent analysis, a FastAPI backend for high-concurrency data handling, and a modern React frontend for a responsive user interface.
+# Rapid Crisis Response
 
-🚀 Features
-AI-Powered Analysis: Utilizes the Gemma 4:31-b model to process and extract actionable intelligence from crisis reports.
+Rapid Crisis Response is an emergency coordination platform designed to automate data extraction and streamline triage during critical events. By utilizing the **Gemma 4:31-b** cloud model, the system processes complex crisis data in real-time, providing actionable insights through a high-performance **FastAPI** backend and a responsive **React** frontend.
 
-Real-time API: High-performance backend built with FastAPI to ensure low-latency response times.
+## 📂 Project Structure
 
-Interactive Dashboard: A dynamic React-based frontend for real-time monitoring and coordination.
-
-Scalable Architecture: Decoupled frontend and backend services for easy deployment and scaling.
+```text
+Rapid_Crisis_Response/
+├── README.md               # Project documentation
+├── main1.py                # Core Gemma 4:31-b model integration logic
+├── backend/
+│   ├── main.py             # FastAPI server and API endpoints
+│   └── requirements.txt    # Python backend dependencies
+└── frontend/
+    ├── src/
+    │   └── App.jsx         # Primary React interface
+    ├── package.json        # Frontend dependencies and scripts
+    └── ...                 # Supporting React components and assets
 
 🛠️ Tech Stack
-Model: Gemma 4:31-b (Cloud-hosted)
+Intelligence: Gemma 4:31-b Cloud Model (Generative AI for data extraction)
 
 Backend: FastAPI (Python)
 
-Frontend: React.js
+Frontend: React.js (Modern UI/UX)
 
-Environment: Node.js, Python 3.9+
+Communication: RESTful API / JSON Parameter Extraction
 
-📂 Project Structure
-Plaintext
-Rapid_Crisis_Response/
-├── main1.py                 # Gemma Model integration & cloud logic
-├── README.md                # Project documentation
-├── backend/
-│   ├── main.py              # FastAPI application entry point
-│   └── requirements.txt     # Python dependencies
-└── frontend/
-    ├── src/
-    │   └── App.jsx          # Main React component
-    ├── package.json         # Node.js dependencies
-    └── ...                  # Other frontend assets and components
-⚙️ Installation & Setup
-Prerequisites
-Python 3.9 or higher
-
-Node.js (v16+) and npm/yarn
-
-Access to Gemma 4:31-b Cloud API keys
-
-1. Backend Setup
-Navigate to the backend directory and install dependencies:
-
-Bash
+🚀 Getting Started
+Backend Setup
+Navigate to the backend directory:
 cd backend
+
+Install dependencies:
 pip install -r requirements.txt
-To run the FastAPI server:
 
-Bash
+Start the FastAPI server:
 uvicorn main:app --reload
-2. Frontend Setup
-Navigate to the frontend directory and install dependencies:
 
-Bash
+Frontend Setup
+Navigate to the frontend directory:
 cd frontend
+
+Install dependencies:
 npm install
-To start the React development server:
 
-Bash
+Start the development server:
 npm start
-3. Model Configuration
-The main1.py file in the root directory handles the logic for the Gemma model. Ensure your cloud environment variables are configured:
 
-Bash
-# Example environment variable
-export GEMMA_API_KEY='your_api_key_here'
-📖 Usage
-Start the FastAPI backend to handle API requests.
+Model Integration
+The main1.py file in the root directory contains the logic for interacting with the Gemma 4:31-b cloud model. Ensure your environment variables and cloud credentials are configured to allow the FastAPI backend to communicate with the model service.
 
-Launch the React frontend to access the user dashboard.
+📋 Features
+Automated Triage: Uses LLM capabilities to categorize emergency requests.
 
-The system will route data through main1.py to interact with the Gemma 4:31-b model for intelligent crisis triage and response recommendations.
+Rapid Data Extraction: Converts unstructured crisis reports into structured JSON data.
+
+Real-time Coordination: A centralized dashboard for hospitality and emergency responders.
+
+Scalable Architecture: Clean separation between the AI model logic, the API layer, and the client-side UI.
+
+📄 License
+This project is developed for the Google Solution Challenge.
