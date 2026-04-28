@@ -4,7 +4,7 @@ import speech_recognition as sr
 import json
 import re
 
-voice input functionality
+# voice input functionality
 recognizer = sr.Recognizer()
 
 with sr.Microphone() as source:
@@ -22,22 +22,25 @@ print(text)
 
 
 #system message to set the context and rules for the model's response
-system_prompt = '''You are an emergency analysis assistant.
-given the query about the emergency situation in image form or text, return output STRICTLY in
- valid JSON format:
+system_prompt = '''you are an emergency response assistant. Your task is to analyze the given
+emergency situation(text, image, or both) and provide structured information that can help emergency responders
+assess the situation and determine the necessary actions. The information you provide should be concise,
+ accurate, and relevant to the emergency at hand.
 
-{
+ return the information in a JSON format with the following fields:
+
   "category":"",
   "severity":"",
   "location":"",
+  "people_involved": number of people involved
   "services_required":[],
   "summary":"",
-  "confidence_score":""
-}
-confidence score to tell how much you are confident about your answer
+  "confidence_score": number between 0 and 1 representing the confidence level of the information provided
 
-if the user query is about the emergency analysis, return compact json. otherwise 
-respond normally in plain text form
+for external services required include only main services.
+ 
+
+if the user query is not about the emergency analysis, respond normally in plain text form
 
 
 Rules:
@@ -47,13 +50,13 @@ Rules:
 services keep things specific
 - DO NOT describe steps
 - If unsure, write "Unknown"
-- Output must start directly with "Emergency Category:.
+
 
 '''
 
 
 # user_input = '''A high-rise residential building is engulfed in intense flames , with fire
-#  spreading rapidly across multiple floors and thick smoke rising into the air. Several
+#  spreading rapidly across multiple floors and thick smoke rising into the air. 8 to 10
 #   occupants may still be trapped inside, and immediate evacuation along with
 #    urgent fire brigade and emergency rescue assistance is required.'''
 
@@ -65,13 +68,14 @@ result = ollama.chat(
         {
             'role': 'user',
             'content': text,
-            'images': ['burning-shopping-center-mall-with-smoke.jpg']
+            'images': ['fire.jpeg']
         }
     ]
     
 )
 
 output = result.message.content
+
 print(output)
 
 end_time = time.time()
