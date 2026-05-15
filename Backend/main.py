@@ -5,7 +5,16 @@ import re
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import ollama
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import SystemMessage, HumanMessage
+from dotenv import load_dotenv
+import base64
+
+
+load_dotenv()
+llm = ChatGoogleGenerativeAI(model="models/gemini-2.5-flash",
+  temperature=0.2,
+  max_tokens=2048)
 
 app = FastAPI()
 
