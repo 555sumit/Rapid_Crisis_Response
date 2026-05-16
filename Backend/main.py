@@ -1,25 +1,24 @@
 import json
 import uvicorn
 import httpx
-import re
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from dotenv import load_dotenv
-import base64
 
-
+# Load API keys (ensure GOOGLE_API_KEY is in your .env)
 load_dotenv()
-llm = ChatGoogleGenerativeAI(model="models/gemini-2.5-flash",
-  temperature=0.2,
-  max_tokens=2048)
+llm = ChatGoogleGenerativeAI(
+    model="models/gemini-2.5-flash",
+    temperature=0.2,
+    max_tokens=2048
+)
 
 app = FastAPI()
 
 # --- Middleware ---
-# Allows your React frontend to communicate with this backend without CORS blocking
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -28,7 +27,6 @@ app.add_middleware(
 )
 
 # --- WebSocket Connection Manager ---
-# Handles real-time communication to the Staff Dashboard
 class ConnectionManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
@@ -50,10 +48,9 @@ manager = ConnectionManager()
 class IncidentReport(BaseModel):
     raw_text: str
     reported_location: str
-    image_data: str | None = None  # Receives base64 image string from the React frontend
+    image_data: str | None = None  
 
 # --- External Dispatcher (Webhooks) ---
-# Automatically routes critical alerts to external 911/First Responder APIs
 async def dispatch_to_external_services(incident_data: dict):
     if not incident_data.get("requires_external_services"):
         return
@@ -65,21 +62,14 @@ async def dispatch_to_external_services(incident_data: dict):
         "summary": incident_data.get("ai_standardized_summary")
     }
 
-    # Asynchronous external API calls to prevent blocking the main server
     async with httpx.AsyncClient() as client:
         try:
             if category == "fire":
                 print("🔥 [WEBHOOK FIRED] Sending automated alert to Fire Department API...")
-                # await client.post("https://api.local-fire-dept.gov/dispatch", json=payload)
-                
             elif category == "medical":
                 print("🚑 [WEBHOOK FIRED] Sending automated alert to Hospital EMS API...")
-                # await client.post("https://api.local-hospital.org/emergency", json=payload)
-                
             elif category == "natural disaster":
                 print("🌪️ [WEBHOOK FIRED] Sending automated alert to Disaster Management...")
-                # await client.post("https://api.disaster-management.gov/alert", json=payload)
-                
         except Exception as e:
             print(f"Failed to reach external service: {e}")
 
@@ -87,9 +77,9 @@ async def dispatch_to_external_services(incident_data: dict):
 @app.post("/api/incidents")
 async def report_incident(report: IncidentReport):
     
-    # Strict prompt to ensure predictable JSON outputs for the dashboard
+    # Updated prompt combining your Gemini rules with the Dashboard's expected JSON
     system_prompt = '''You are an emergency analysis assistant for a hospitality venue.
-    Given the text (and potentially an image) about the emergency situation, return output STRICTLY in valid JSON format:
+    Analyze the given emergency situation (text, image, or both) and return output STRICTLY in valid JSON format:
     {
       "incident_category": "Medical or Fire or Security or Natural Disaster or Other",
       "severity_level": "Critical or High or Medium or Low",
@@ -98,40 +88,54 @@ async def report_incident(report: IncidentReport):
       "requires_external_services": false,
       "number_of_people_affected": 1,
       "ai_standardized_summary": "",
-      "confidence_score": 0.9
+      "confidence_score": 0.95
     }
     Rules:
-    - DO NOT include "Thinking", "Analysis", or explanations.
-    - DO NOT include any extra text outside the JSON.
-    - Keep the summary concise and professional.
+    - DO NOT include Markdown formatting (like ```json).
+    - DO NOT include any extra text or thoughts outside the JSON.
+    - Keep the summary concise and highly professional.
     '''
 
     user_input = f"Location: {report.reported_location}\nReport: {report.raw_text}"
     
-    # Construct the message payload for Ollama
-    message_content = {'role': 'user', 'content': user_input}
+    # Construct the multimodal message payload for LangChain
+    content_blocks = [
+        {"type": "text", "text": user_input}
+    ]
     
-    # If an image was attached via the frontend, clean the base64 header and append it
+    # Attach image if provided by the frontend
     if report.image_data:
-        clean_base64 = re.sub('^data:image/.+;base64,', '', report.image_data)
-        message_content['images'] = [clean_base64]
+        image_url = report.image_data
+        # Ensure the frontend base64 string is properly formatted for Gemini
+        if not image_url.startswith("data:image"):
+            image_url = f"data:image/jpeg;base64,{image_url}"
+            
+        content_blocks.append({
+            "type": "image_url",
+            "image_url": image_url
+        })
 
-    # Run the local Ollama model (forcing JSON format to prevent parsing crashes)
-    result = ollama.chat(
-        model='gemma4:31b-cloud',
-        messages=[
-            {'role': 'system', 'content': system_prompt},
-            message_content
-        ],
-        format='json' 
-    )
-    
-    output_text = result['message']['content']
-    
-    # Safely parse the AI output, with a robust fallback if formatting fails
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=content_blocks)
+    ]
+
     try:
-        parsed_incident = json.loads(output_text)
-    except json.JSONDecodeError:
+        # Invoke Gemini 2.5 Flash
+        response = llm.invoke(messages)
+        output_text = response.content.strip()
+        
+        # Clean up Markdown block if the LLM ignores instructions
+        if output_text.startswith("```json"):
+            output_text = output_text[7:]
+        if output_text.endswith("```"):
+            output_text = output_text[:-3]
+            
+        parsed_incident = json.loads(output_text.strip())
+        
+    except Exception as e:
+        print(f"Error parsing Gemini response: {e}")
+        # Robust fallback
         parsed_incident = {
             "incident_category": "Unknown",
             "severity_level": "High",
@@ -139,17 +143,15 @@ async def report_incident(report: IncidentReport):
             "weapons_or_hazards_present": False,
             "requires_external_services": True,
             "number_of_people_affected": 0,
-            "ai_standardized_summary": "System parsing error. Raw report: " + report.raw_text,
+            "ai_standardized_summary": f"System parsing error. Raw report: {report.raw_text}",
             "confidence_score": 0.0
         }
     
-    # 1. Instantly broadcast to internal staff dashboard via WebSockets
+    # Broadcast to CAD Dashboard & Dispatch
     await manager.broadcast(parsed_incident)
-    
-    # 2. Trigger external dispatch routing (Fire, Medical, etc.) in the background
     await dispatch_to_external_services(parsed_incident)
     
-    return {"status": "success", "message": "Incident successfully processed and routed.", "data": parsed_incident}
+    return {"status": "success", "message": "Incident successfully processed.", "data": parsed_incident}
 
 # --- WebSocket Endpoints ---
 @app.websocket("/ws/alerts")
@@ -157,11 +159,9 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            # Keep the connection alive
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
 if __name__ == "__main__":
-    # Runs the server on localhost port 8000
     uvicorn.run(app, host="0.0.0.0", port=8000)

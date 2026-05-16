@@ -3,20 +3,20 @@ import React, { useState, useEffect } from 'react';
 // --- US 911 / Hospital Standard Emergency Color Palettes ---
 const getSeverityColor = (severity) => {
   switch (severity?.toLowerCase()) {
-    case 'critical': return '#EF4444'; // Code Red: Immediate Threat
-    case 'high': return '#F97316';     // Code Orange: Urgent/Hazmat
-    case 'medium': return '#EAB308';   // Code Yellow: Caution
-    default: return '#10B981';         // Code Green: Low priority / Safe
+    case 'critical': return '#EF4444'; 
+    case 'high': return '#F97316';     
+    case 'medium': return '#EAB308';   
+    default: return '#10B981';         
   }
 };
 
 const getCategoryColor = (category) => {
   switch (category?.toLowerCase()) {
-    case 'medical': return '#3B82F6';  // Code Blue (EMS/Medical)
-    case 'fire': return '#EF4444';     // Code Red (Fire)
-    case 'security': return '#94A3B8'; // Code Silver (Police/Weapons)
-    case 'natural disaster': return '#8B5CF6'; // Purple (Severe Weather/Disaster)
-    default: return '#64748B';         // Default Slate
+    case 'medical': return '#3B82F6';  
+    case 'fire': return '#EF4444';     
+    case 'security': return '#94A3B8'; 
+    case 'natural disaster': return '#8B5CF6'; 
+    default: return '#64748B';         
   }
 };
 
@@ -114,7 +114,6 @@ function GuestView() {
     }
   };
 
-  // Shared input styling for consistency
   const inputStyle = { width: '100%', padding: '14px', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#0F172A', color: '#F8FAFC', fontSize: '16px', boxSizing: 'border-box', outline: 'none' };
 
   return (
@@ -270,6 +269,13 @@ function StaffDashboard() {
                   {alert.number_of_people_affected > 0 && (
                     <span style={{ backgroundColor: '#1E293B', color: '#94A3B8', padding: '6px 10px', borderRadius: '4px', border: '1px solid #475569' }}>
                       👥 AFFECTED: {alert.number_of_people_affected}
+                    </span>
+                  )}
+
+                  {/* New AI Confidence Badge */}
+                  {alert.confidence_score !== undefined && (
+                    <span style={{ backgroundColor: '#1E293B', color: '#94A3B8', padding: '6px 10px', borderRadius: '4px', border: '1px solid #475569' }}>
+                      🤖 AI CONFIDENCE: {(alert.confidence_score * 100).toFixed(0)}%
                     </span>
                   )}
                 </div>
